@@ -1,0 +1,137 @@
+/* Language Switcher Styles */
+
+.language-switcher {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Button Group Variant */
+.language-switcher--buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.language-switcher__button {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  background-color: #f5f5f5;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.language-switcher__button:hover {
+  background-color: #e8e8e8;
+  border-color: #999;
+}
+
+.language-switcher__button--active {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+
+.language-switcher__button--active:hover {
+  background-color: #0056b3;
+  border-color: #003d82;
+}
+
+.language-switcher__button:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Dropdown Variant */
+.language-switcher--dropdown {
+  display: inline-block;
+}
+
+.language-switcher__select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  background-color: #f5f5f5;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  appearance: none;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23333' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+}
+
+.language-switcher__select:hover {
+  background-color: #e8e8e8;
+  border-color: #999;
+}
+
+.language-switcher__select:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 0;
+  border-color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .language-switcher--buttons {
+    gap: 0;
+  }
+
+  .language-switcher__button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .language-switcher__select {
+    font-size: 0.85rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .language-switcher__button {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+
+  .language-switcher__button:hover {
+    background-color: #3a3a3a;
+    border-color: #666;
+  }
+
+  .language-switcher__button--active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0956ca;
+  }
+
+  .language-switcher__button--active:hover {
+    background-color: #0956ca;
+    border-color: #073399;
+  }
+
+  .language-switcher__select {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23e0e0e0' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  }
+
+  .language-switcher__select:hover {
+    background-color: #3a3a3a;
+    border-color: #666;
+  }
+
+  .language-switcher__select:focus {
+    border-color: #0d6efd;
+  }
+}
