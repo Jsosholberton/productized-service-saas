@@ -1,102 +1,119 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { validateWompiWebhookSignature, WompiWebhookPayload } from '@/lib/wompi';
-import { generateQuotationPRD } from '@/actions/delivery';
+import { verifyWompiWebhookSignature } from '@/lib/wompi/integrity';
+import { generateTechnicalBlueprint } from '@/lib/ai/quote-engine';
 
-/**
- * POST /api/webhooks/wompi
- * Procesa webhooks de Wompi cuando un pago es confirmado/rechazado
- */
-export async function POST(request: NextRequest) {
+const WOMPI_INTEGRITY_KEY = process.env.WOMPI_INTEGRITY_KEY;
+
+export async function POST(req: NextRequest) {
   try {
-    // 1. Validar firma del webhook
-    const body = await request.text();
-    const signatureHeader = request.headers.get('X-Wompi-Signature') || '';
+    // Verify signature from header
+    const signature = req.headers.get('x-wompi-signature');
+    if (!signature || !WOMPI_INTEGRITY_KEY) {
+      console.error('Missing signature or integrity key');
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-    const isValid = validateWompiWebhookSignature(
-      body,
-      signatureHeader,
-      process.env.WOMPI_INTEGRITY_KEY || ''
+    // Get raw body for signature verification
+    const rawBody = await req.text();
+
+    // Verify signature
+    const isValid = verifyWompiWebhookSignature(
+      rawBody,
+      signature,
+      WOMPI_INTEGRITY_KEY
     );
 
     if (!isValid) {
-      console.error('Firma de Wompi inválida');
+      console.error('Invalid signature');
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
       );
     }
 
-    // 2. Parsear payload
-    const payload: WompiWebhookPayload = JSON.parse(body);
-    const { event, data } = payload;
+    const body = JSON.parse(rawBody);
+    const { event, data } = body;
 
-    // 3. Solo procesar eventos de transacción
-    if (!event.includes('transaction')) {
-      return NextResponse.json({ received: true });
-    }
+    // Handle transaction.updated event
+    if (event === 'transaction.updated') {
+      const transaction = data.transaction;
+      const { reference, status, id: wompiId, amount_in_cents } = transaction;
 
-    const transaction = data.transaction;
+      // Update transaction in database
+      const dbTransaction = await prisma.transaction.findUnique({
+        where: { reference },
+        include: { project: { include: { features: true } } },
+      });
 
-    // 4. Buscar transacción en BD
-    const dbTransaction = await prisma.transaction.findUnique({
-      where: { wompiReference: transaction.reference },
-      include: { project: { include: { features: true } } },
-    });
+      if (!dbTransaction) {
+        console.warn(`Transaction not found for reference: ${reference}`);
+        return NextResponse.json(
+          { message: 'Transaction not found' },
+          { status: 404 }
+        );
+      }
 
-    if (!dbTransaction) {
-      console.error(`Transacción no encontrada: ${transaction.reference}`);
+      // Map Wompi status to our enum
+      let statusMap: 'APPROVED' | 'DECLINED' | 'VOIDED' | 'ERROR' | 'PENDING' = 'PENDING';
+      if (status === 'APPROVED') statusMap = 'APPROVED';
+      else if (status === 'DECLINED') statusMap = 'DECLINED';
+      else if (status === 'VOIDED') statusMap = 'VOIDED';
+      else if (status === 'ERROR') statusMap = 'ERROR';
+
+      // Update transaction
+      const updatedTransaction = await prisma.transaction.update({
+        where: { id: dbTransaction.id },
+        data: {
+          wompiStatus: statusMap,
+          wompiId: wompiId,
+          approvedAt: statusMap === 'APPROVED' ? new Date() : null,
+        },
+      });
+
+      // If payment approved, update project status and generate blueprint
+      if (statusMap === 'APPROVED') {
+        const project = dbTransaction.project;
+
+        // Generate technical blueprint
+        const blueprint = await generateTechnicalBlueprint(
+          project.features.map((f) => ({
+            name: f.name,
+            description: f.description,
+            estimatedHours: f.estimatedHours,
+          }))
+        );
+
+        // Update project status
+        await prisma.project.update({
+          where: { id: project.id },
+          data: {
+            status: 'PAID',
+            // Save blueprint somewhere (e.g., as a file or in a separate table)
+          },
+        });
+
+        // TODO: Send email to admin and client
+        // - Admin: "New project ready for development" with blueprint
+        // - Client: "Payment received, development starts soon"
+      }
+
       return NextResponse.json(
-        { error: 'Transaction not found' },
-        { status: 404 }
+        { message: 'Webhook processed successfully' },
+        { status: 200 }
       );
     }
 
-    // 5. Actualizar estado de transacción
-    const wompiStatus =
-      transaction.status === 'APPROVED'
-        ? 'APPROVED'
-        : transaction.status === 'DECLINED'
-          ? 'DECLINED'
-          : 'PENDING';
-
-    await prisma.transaction.update({
-      where: { id: dbTransaction.id },
-      data: {
-        wompiStatus,
-        wompiTransactionId: transaction.id,
-        paymentMethod: transaction.payment_method.type,
-        approvedAt: wompiStatus === 'APPROVED' ? new Date() : null,
-        errorMessage:
-          wompiStatus === 'DECLINED'
-            ? `Pago rechazado por ${transaction.payment_method.type}`
-            : null,
-      },
-    });
-
-    // 6. Si el pago fue aprobado, actualizar proyecto
-    if (wompiStatus === 'APPROVED') {
-      // Cambiar status a IN_QUEUE
-      const project = await prisma.project.update({
-        where: { id: dbTransaction.projectId },
-        data: { status: 'PAYMENT_APPROVED' },
-        include: { features: true },
-      });
-
-      // Generar Blueprint Técnico con IA
-      try {
-        await generateQuotationPRD(project.id);
-      } catch (error) {
-        console.error('Error generando PRD:', error);
-        // No fallar el webhook, solo log
-      }
-
-      console.log(`Pago aprobado para proyecto ${project.id}`);
-    }
-
-    return NextResponse.json({ received: true });
+    // For other events, just acknowledge
+    return NextResponse.json(
+      { message: 'Event received' },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error('Error en webhook de Wompi:', error);
+    console.error('Webhook error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
