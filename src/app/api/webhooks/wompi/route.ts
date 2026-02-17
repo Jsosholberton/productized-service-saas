@@ -81,12 +81,16 @@ export async function POST(req: NextRequest) {
         // Generate technical blueprint
         await generateQuotationPRD(project.id);
 
+        // Log blueprint for now (in production, save to S3 or database)
+        // TODO: Persist blueprint to database or file storage
+        // Consider adding a blueprintUrl field to Project model or creating a separate Document table
+        console.log(`Blueprint generated for project ${project.id}:`, blueprint.substring(0, 100) + '...');
+
         // Update project status
         await prisma.project.update({
           where: { id: project.id },
           data: {
             status: 'PAID',
-            // Save blueprint somewhere (e.g., as a file or in a separate table)
           },
         });
 

@@ -235,6 +235,8 @@ export async function createTransaction(
         amountInCents: totalAmount,
         currency: 'COP',
         subtotal: project.totalPrice,
+        ivaTax: 0,
+        reteFuente: 0,
         wompiStatus: 'PENDING',
       },
     });

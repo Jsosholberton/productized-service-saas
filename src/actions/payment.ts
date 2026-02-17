@@ -68,6 +68,7 @@ export async function createPaymentSession(
       ivaTax: tax,
       amountInCents: total,
       currency: 'COP',
+      wompiStatus: 'PENDING',
     },
   });
 

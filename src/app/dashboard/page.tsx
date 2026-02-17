@@ -91,6 +91,8 @@ export default async function DashboardPage() {
                         {project.status === 'PAID' && 'En cola'}
                         {project.status === 'IN_DEVELOPMENT' && 'En desarrollo'}
                         {project.status === 'DELIVERED' && 'Entregado'}
+                        {project.status === 'REVIEW' && 'En revisión'}
+                        {project.status === 'CANCELLED' && 'Cancelado'}
                       </span>
                       <span className="text-sm font-semibold text-slate-900">
                         ${project.basePrice.toLocaleString()}

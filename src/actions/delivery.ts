@@ -102,5 +102,5 @@ async function sendDeliveryEmail(project: any) {
   });
   */
 
-  console.log(`Email de entrega enviado a ${project.clientId}`);
+  console.log(`Email de entrega enviado a ${project.userId}`);
 }
