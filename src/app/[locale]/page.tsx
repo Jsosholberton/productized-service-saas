@@ -2,12 +2,12 @@ import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import { ArrowRight, Zap, Lock, Rocket } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export default async function LandingPage() {
   const { userId } = await auth();
-  const t = useTranslations('landing');
+  const t = await getTranslations('landing');
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
