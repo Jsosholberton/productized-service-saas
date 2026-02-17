@@ -10,20 +10,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ========== USERS ==========
-model User {
-  id            String     @id @default(cuid())
-  clerkId       String     @unique // Clerk external ID
-  email         String     @unique
-  firstName     String?
-  lastName      String?
-  role          Role       @default(CLIENT) // CLIENT | ADMIN
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+// ============= USER & AUTH =============
 
-  // Relations
-  projects      Project[]
-  subscriptions Subscription[]
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects       Project[]
+  subscriptions  Subscription[]
+  notifications  Notification[]
+
+  @@index([clerkId])
+  @@index([role])
 }
 
 enum Role {
@@ -31,134 +33,175 @@ enum Role {
   ADMIN
 }
 
-// ========== PROJECTS ==========
+// ============= PROJECT & SCOPE =============
+
 model Project {
-  id                String      @id @default(cuid())
-  clientId          String
-  client            User        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  title             String // Título del proyecto (generado por IA)
-  description       String      @db.Text // Descripción original del cliente
-  status            ProjectStatus @default(PENDING_PAYMENT)
+  title            String
+  description      String   @db.Text
+  status           ProjectStatus @default(PENDING)
   
-  // Motor de Cotización
-  basePrice         Float       @default(0) // USD
-  estimatedHours    Int         @default(0)
-  features          Feature[]   // Features atómicas detectadas por IA
+  // Pricing
+  basePrice        Int      // cents (e.g., 1000 = $10.00)
+  totalPrice       Int
+  features         Feature[]
   
   // Scope Lock
-  scopeConfirmed    Boolean     @default(false)
-  revisionsIncluded Int         @default(1) // Número de revisiones incluidas
+  scopeLocked      Boolean  @default(false)
+  scopeLockedAt    DateTime?
   
-  // Videos y Entrega
-  deliveryVideoUrl  String? // Link de Loom/YouTube
-  deliveryZipUrl    String? // Link al archivo .zip descargable
+  // Payment
+  transaction      Transaction?
   
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  completedAt       DateTime?
+  // Maintenance
+  subscription     Subscription?
   
-  // Relations
-  transaction       Transaction?
-  subscription      Subscription?
+  // Delivery
+  deliveryFile     String?  // S3 URL or file path
+  videoWalkthrough String?  // Loom/YouTube link
+  deliveredAt      DateTime?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
 
 enum ProjectStatus {
-  PENDING_PAYMENT    // Esperando pago
-  PAYMENT_APPROVED   // Pago confirmado por Wompi
-  IN_QUEUE           // En cola para desarrollo
-  IN_DEVELOPMENT     // En desarrollo
-  DELIVERED          // Entregado
-  ARCHIVED           // Archivado
+  PENDING         // Waiting for payment
+  PAID            // Payment approved, awaiting development
+  IN_DEVELOPMENT  // Work in progress
+  REVIEW          // Client review phase
+  DELIVERED       // Project delivered
+  CANCELLED       // Project cancelled
 }
 
-// ========== FEATURES ==========
+// ============= FEATURES (Scope) =============
+
 model Feature {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   projectId   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
-  name        String    // Nombre de la feature (e.g., "Autenticación de usuarios")
-  description String    @db.Text // Descripción breve
-  complexity  Complexity // LOW | MEDIUM | HIGH
-  estimatedHours Int    @default(0)
+  name        String   // e.g., "User Authentication"
+  description String   @db.Text
+  estimatedHours Int   // Estimated dev hours
+  confirmed   Boolean  @default(false) // User checked this feature
   
-  // Scope Lock
-  confirmed   Boolean   @default(false) // Usuario marcó el checkbox
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
 }
 
-enum Complexity {
-  LOW
-  MEDIUM
-  HIGH
-}
+// ============= PAYMENTS (Wompi Integration) =============
 
-// ========== TRANSACTIONS ==========
 model Transaction {
-  id            String    @id @default(cuid())
-  projectId     String    @unique
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  projectId       String   @unique
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
-  // Wompi Data
-  wompiReference String   @unique // Referencia única para Wompi
-  wompiStatus   WompiStatus @default(PENDING)
-  wompiTransactionId String? // ID retornado por Wompi (post-pago)
+  wompiId         String   @unique // Wompi transaction ID
+  reference       String   @unique // Unique reference for user (e.g., PRJ-123ABC)
   
-  // Pricing
-  subtotal      Float     // Monto base
-  tax           Float     @default(0) // IVA/Retefuente
-  total         Float     // Total a pagar
-  currency      String    @default("COP")
+  amountInCents   Int      // Total amount in cents
+  currency        String   @default("COP")
   
-  // Metadata
-  paymentMethod String?   // PSE, TARJETA, etc.
-  errorMessage  String?   @db.Text
+  // Tax calculations
+  subtotal        Int
+  ivaTax          Int      @default(0)    // IVA (19% in Colombia)
+  reteFuente      Int      @default(0)    // Retención en la fuente
   
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  approvedAt    DateTime?
+  wompiStatus     WompiStatus @default(PENDING)
+  paymentMethod   String?  // PSE, CARD, NEQUI, etc.
+  
+  // Integrity & Security
+  integritySignature String? // SHA256 signature from Wompi
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  approvedAt      DateTime?
+
+  @@index([projectId])
+  @@index([wompiId])
+  @@index([reference])
+  @@index([wompiStatus])
 }
 
 enum WompiStatus {
-  PENDING
-  APPROVED
-  DECLINED
-  ERROR
+  PENDING     // Waiting for payment
+  APPROVED    // Payment successful
+  DECLINED    // Payment rejected
+  VOIDED      // Payment cancelled
+  ERROR       // Payment error
 }
 
-// ========== SUBSCRIPTIONS ==========
+// ============= SUBSCRIPTIONS (Upsell) =============
+
 model Subscription {
-  id            String    @id @default(cuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  projectId     String    @unique
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String   @unique
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
-  // Plan
-  planName      String    @default("MAINTENANCE") // MAINTENANCE
-  monthlyPrice  Float
-  status        SubscriptionStatus @default(ACTIVE)
+  type            SubscriptionType @default(MAINTENANCE)
+  monthlyPrice    Int      // Price in cents per month
   
-  // Ciclo de Facturación
-  billingDay    Int       @default(1) // Día del mes
+  status          SubscriptionStatus @default(ACTIVE)
+  billingCycle    Int      @default(1) // Current billing cycle
+  
   nextBillingDate DateTime
+  cancellationDate DateTime?
   
-  // Incluidos en el plan
-  monthlyChanges Int      @default(1) // Cambios menores incluidos
-  hosting       Boolean   @default(true)
-  bugFixes      Boolean   @default(true)
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  canceledAt    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+}
+
+enum SubscriptionType {
+  MAINTENANCE     // Hosting + bug fixes + 1 change/month
+  PRIORITY_SUPPORT // Faster turnaround (add-on)
+  DEDICATED_DEVELOPER // Dedicated resource
 }
 
 enum SubscriptionStatus {
   ACTIVE
   PAUSED
-  CANCELED
+  CANCELLED
+}
+
+// ============= NOTIFICATIONS =============
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      NotificationType
+  title     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([read])
+}
+
+enum NotificationType {
+  QUOTE_READY     // Cotización lista
+  PAYMENT_SUCCESS // Pago procesado
+  DEVELOPMENT_START // Desarrollo iniciado
+  DELIVERY_READY  // Listo para descargar
+  MAINTENANCE_DUE // Mantenimiento próximo
 }
