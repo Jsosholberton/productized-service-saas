@@ -21,6 +21,7 @@ pnpm-debug.log*
 
 # Environment variables
 .env
+.next
 .env*.local
 .env.production
 

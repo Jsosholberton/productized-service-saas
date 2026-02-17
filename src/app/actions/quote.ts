@@ -230,7 +230,7 @@ export async function createTransaction(
     const transaction = await prisma.transaction.create({
       data: {
         projectId,
-        wompiId: '', // Will be updated by webhook
+        wompiId: reference,
         reference,
         amountInCents: totalAmount,
         currency: 'COP',

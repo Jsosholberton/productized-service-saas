@@ -1,0 +1,59 @@
+{
+  "landing": {
+    "nav": {
+      "title": "Agencia Productizada",
+      "signin": "Iniciar sesión",
+      "signup": "Registrarse",
+      "dashboard": "Dashboard"
+    },
+    "hero": {
+      "title": "Software personalizado en",
+      "titleHighlight": "minutos",
+      "subtitle": "Describe tu idea, recibe una cotización instantánea impulsada por IA, y comienza el desarrollo. Sin sorpresas, sin cambios de alcance.",
+      "cta": "Obtener cotización",
+      "demo": "Ver demo"
+    },
+    "howItWorks": {
+      "title": "Cómo funciona",
+      "step1": {
+        "title": "Describe tu idea",
+        "description": "Cuéntanos qué deseas construir en lenguaje natural. Nuestro formulario es simple e intuitivo."
+      },
+      "step2": {
+        "title": "Cotización instantánea",
+        "description": "Nuestro motor de IA analiza tu proyecto, desglosa en features y genera un precio justo en segundos."
+      },
+      "step3": {
+        "title": "Paga y recibe",
+        "description": "Confirma el scope, paga vía Wompi y entra a la cola de desarrollo. Tu proyecto inicia pronto."
+      }
+    },
+    "features": {
+      "title": "Por qué elegirnos",
+      "scopeLock": {
+        "title": "Scope Lock Garantizado",
+        "description": "Confirmas exactamente qué se incluye antes de pagar. El diseño recibe 1 revisión incluida."
+      },
+      "fastDelivery": {
+        "title": "Entrega rápida",
+        "description": "Proyectos productizados con timeline predecible. Recibirás un video walkthrough explicativo."
+      },
+      "maintenance": {
+        "title": "Mantenimiento incluido",
+        "description": "Añade un plan mensual: hosting, correcciones y 1 cambio menor incluidos."
+      },
+      "transparency": {
+        "title": "Transparencia total",
+        "description": "Precios desglosados, impuestos claros (IVA/Retefuente). Sin sorpresas al final."
+      }
+    },
+    "cta": {
+      "title": "¿Listo para comenzar?",
+      "subtitle": "Obtén tu cotización gratuita en menos de 2 minutos.",
+      "button": "Solicitar cotización"
+    },
+    "footer": {
+      "copyright": "© 2026 Agencia Productizada. Todos los derechos reservados. | Cali, Colombia"
+    }
+  }
+}

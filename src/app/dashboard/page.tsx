@@ -32,7 +32,7 @@ export default async function DashboardPage() {
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
-          <p className="text-slate-600">Bienvenido, {user.email ? user.email.split('@')[0] : 'Usuario'}</p>
+          <p className="text-slate-600">Bienvenido, {user.email}</p>
         </div>
 
         {/* New Quotation CTA */}
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
                     </div>
 
                     <div className="text-xs text-slate-500">
-                      {project.features.length} features • ~{project.features.reduce((sum, f) => sum + f.estimatedHours, 0)}h
+                      {project.features.length} features
                     </div>
                   </div>
                 </Link>

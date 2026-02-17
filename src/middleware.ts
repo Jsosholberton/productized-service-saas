@@ -1,31 +1,43 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import createMiddleware from 'next-intl/middleware';
+import { NextRequest, NextResponse } from 'next/server';
 
-const isAdminRoute = createRouteMatcher(['/admin(.*)']);
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/admin(.*)']);
+const locales = ['en', 'es'];
+const defaultLocale = 'es';
 
-export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
+// Create the i18n middleware
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'as-needed'
+});
 
-  // Redirect to sign-in if trying to access protected route without auth
-  if (isProtectedRoute(req) && !userId) {
-    const signInUrl = new URL('/sign-in', req.url);
-    signInUrl.searchParams.set('redirect_url', req.url);
-    return NextResponse.redirect(signInUrl);
+// Define protected routes
+const isProtectedRoute = createRouteMatcher([
+  '/:locale/admin(.*)',
+  '/:locale/dashboard(.*)',
+  '/admin(.*)',
+  '/dashboard(.*)'
+]);
+
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // First apply i18n middleware
+  const intlResponse = intlMiddleware(req);
+  
+  // Check if route is protected and user is not authenticated
+  if (isProtectedRoute(req)) {
+    await auth.protect();
   }
 
-  // For admin routes, check if user has admin role from Clerk metadata
-  if (isAdminRoute(req) && userId) {
-    // TODO: Check user role from Clerk publicMetadata or database
-    // For now, we redirect to home for all admin routes as they need proper role checking
-    // In production, implement: const { sessionClaims } = await auth();
-    // and check sessionClaims.metadata.role === 'admin'
-    console.warn('Admin route accessed - role verification not yet implemented');
-  }
-
-  return NextResponse.next();
+  // Return the i18n response or continue
+  return intlResponse || NextResponse.next();
 });
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/(api)(.*)'],
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
 };

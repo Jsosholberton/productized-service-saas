@@ -20,12 +20,10 @@ interface TaxBreakdownProps {
  * Helps clients understand exactly what they're paying
  */
 export function TaxBreakdown({
-  basePrice,
   lineItems,
   totalPrice,
-  taxRegime,
   showDetails = true,
-}: TaxBreakdownProps) {
+}: Omit<TaxBreakdownProps, 'basePrice' | 'taxRegime'>) {
   const config = getActiveTaxConfig();
 
   return (
@@ -106,11 +104,10 @@ export function TaxBreakdown({
       {/* Legal Notice */}
       <div className="mt-4 rounded-lg bg-gray-100 p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1">Nota fiscal:</p>
-        <p>
+        <p className="text-sm text-gray-600">
           {config.regime === 'PERSONA_NATURAL'
             ? 'Se emitirá factura simplificada con Cédula de Ciudadanía. No se generará secuencial ante DIAN.'
-            : 'Se emitirá factura electrónica conforme a regulaciones DIAN con numeración secuencial.
-          Los impuestos serná reportados en declaraciones mensuales.'}
+            : 'Se emitirá factura electrónica conforme a regulaciones DIAN con numeración secuencial. Los impuestos serán reportados en declaraciones mensuales.'}
         </p>
       </div>
     </div>
@@ -120,7 +117,7 @@ export function TaxBreakdown({
 /**
  * Minimal version for displaying in lists/tables
  */
-export function TaxBreakdownBadge({ taxRegime, total }: { taxRegime: string; total: number }) {
+export function TaxBreakdownBadge({ total }: { total: number }) {
   const config = getActiveTaxConfig();
 
   return (

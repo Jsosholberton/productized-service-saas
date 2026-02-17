@@ -61,13 +61,12 @@ export async function createPaymentSession(
   // 6. Crear transacción en BD
   const transaction = await prisma.transaction.create({
     data: {
-      projectId: request.projectId,
-      wompiId: '', // Will be updated by webhook
+      projectId: project.id,
+      wompiId: wompiReference,
       reference: wompiReference,
-      amountInCents: Math.round(total * 100), // Convert to cents
-      subtotal: Math.round(subtotal * 100),
-      ivaTax: Math.round(tax * 100),
-      reteFuente: 0,
+      subtotal,
+      ivaTax: tax,
+      amountInCents: total,
       currency: 'COP',
       wompiStatus: 'PENDING',
     },

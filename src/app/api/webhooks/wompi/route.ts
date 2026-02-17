@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyWompiWebhookSignature } from '@/lib/wompi/integrity';
-import { generateTechnicalBlueprint } from '@/lib/ai/quote-engine';
+import { generateQuotationPRD } from '@/actions/delivery';
 
 const WOMPI_INTEGRITY_KEY = process.env.WOMPI_INTEGRITY_KEY;
 
@@ -79,13 +79,7 @@ export async function POST(req: NextRequest) {
         const project = dbTransaction.project;
 
         // Generate technical blueprint
-        const blueprint = await generateTechnicalBlueprint(
-          project.features.map((f) => ({
-            name: f.name,
-            description: f.description,
-            estimatedHours: f.estimatedHours,
-          }))
-        );
+        await generateQuotationPRD(project.id);
 
         // Log blueprint for now (in production, save to S3 or database)
         // TODO: Persist blueprint to database or file storage
