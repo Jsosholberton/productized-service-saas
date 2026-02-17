@@ -88,6 +88,8 @@ export async function POST(req: NextRequest) {
         );
 
         // Log blueprint for now (in production, save to S3 or database)
+        // TODO: Persist blueprint to database or file storage
+        // Consider adding a blueprintUrl field to Project model or creating a separate Document table
         console.log(`Blueprint generated for project ${project.id}:`, blueprint.substring(0, 100) + '...');
 
         // Update project status

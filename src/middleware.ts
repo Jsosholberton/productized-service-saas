@@ -14,11 +14,13 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // For admin routes, check if user has admin role
-  // Note: In production, you'd check user role from Clerk metadata or database
+  // For admin routes, check if user has admin role from Clerk metadata
   if (isAdminRoute(req) && userId) {
-    // You can add additional admin check here if needed
-    // For now, we'll just ensure they're authenticated
+    // TODO: Check user role from Clerk publicMetadata or database
+    // For now, we redirect to home for all admin routes as they need proper role checking
+    // In production, implement: const { sessionClaims } = await auth();
+    // and check sessionClaims.metadata.role === 'admin'
+    console.warn('Admin route accessed - role verification not yet implemented');
   }
 
   return NextResponse.next();

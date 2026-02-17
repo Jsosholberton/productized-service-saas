@@ -33,7 +33,11 @@ pnpm-debug.log*
 .DS_Store
 
 # Prisma
-prisma/migrations/
+# Note: Migrations should be committed to version control
+# Only ignore migration lock file in development
+prisma/.env
+*.db
+*.db-journal
 
 # Vercel
 .vercel
