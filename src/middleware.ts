@@ -1,40 +1,43 @@
-import { withClerkMiddleware, getAuth } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 
-export default withClerkMiddleware(async (req: NextRequest) => {
-  const { userId } = getAuth(req);
+const locales = ['en', 'es'];
+const defaultLocale = 'es';
 
-  // Si intenta acceder a /admin, validar que sea admin
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (!userId) {
-      return NextResponse.redirect(new URL('/sign-in', req.url));
-    }
+// Create the i18n middleware
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'as-needed'
+});
 
-    try {
-      const user = await prisma.user.findUnique({
-        where: { clerkId: userId },
-      });
+// Define protected routes
+const isProtectedRoute = createRouteMatcher([
+  '/:locale/admin(.*)',
+  '/:locale/dashboard(.*)',
+  '/admin(.*)',
+  '/dashboard(.*)'
+]);
 
-      if (!user || user.role !== 'ADMIN') {
-        return NextResponse.redirect(new URL('/', req.url));
-      }
-    } catch (error) {
-      console.error('Error en middleware:', error);
-      return NextResponse.redirect(new URL('/', req.url));
-    }
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // First apply i18n middleware
+  const intlResponse = intlMiddleware(req);
+  
+  // Check if route is protected and user is not authenticated
+  if (isProtectedRoute(req)) {
+    await auth.protect();
   }
 
-  // Si intenta acceder a /dashboard, debe estar autenticado
-  if (req.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!userId) {
-      return NextResponse.redirect(new URL('/sign-in', req.url));
-    }
-  }
-
-  return NextResponse.next();
+  // Return the i18n response or continue
+  return intlResponse || NextResponse.next();
 });
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/(api)(.*)'],
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
 };

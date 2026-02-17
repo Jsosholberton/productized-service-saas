@@ -1,0 +1,59 @@
+{
+  "landing": {
+    "nav": {
+      "title": "Productized Agency",
+      "signin": "Sign in",
+      "signup": "Sign up",
+      "dashboard": "Dashboard"
+    },
+    "hero": {
+      "title": "Custom software in",
+      "titleHighlight": "minutes",
+      "subtitle": "Describe your idea, get an instant AI-powered quote, and start development. No surprises, no scope changes.",
+      "cta": "Get a quote",
+      "demo": "Watch demo"
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "step1": {
+        "title": "Describe your idea",
+        "description": "Tell us what you want to build in natural language. Our form is simple and intuitive."
+      },
+      "step2": {
+        "title": "Instant quote",
+        "description": "Our AI engine analyzes your project, breaks it into atomic features and generates a fair price in seconds."
+      },
+      "step3": {
+        "title": "Pay and receive",
+        "description": "Confirm the scope, pay via Wompi and enter the development queue. Your project starts soon."
+      }
+    },
+    "features": {
+      "title": "Why choose us",
+      "scopeLock": {
+        "title": "Guaranteed Scope Lock",
+        "description": "You confirm exactly what's included before paying. Design includes 1 revision."
+      },
+      "fastDelivery": {
+        "title": "Fast delivery",
+        "description": "Productized projects with predictable timeline. You'll receive an explanatory walkthrough video."
+      },
+      "maintenance": {
+        "title": "Maintenance included",
+        "description": "Add a monthly plan: hosting, bug fixes and 1 minor change included."
+      },
+      "transparency": {
+        "title": "Total transparency",
+        "description": "Itemized pricing, clear taxes (VAT/Withholding). No surprises at the end."
+      }
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "subtitle": "Get your free quote in less than 2 minutes.",
+      "button": "Request quote"
+    },
+    "footer": {
+      "copyright": "© 2026 Productized Agency. All rights reserved. | Cali, Colombia"
+    }
+  }
+}

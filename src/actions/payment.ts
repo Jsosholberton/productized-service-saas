@@ -36,7 +36,7 @@ export async function createPaymentSession(
   }
 
   // 2. Validar que scope esté locked
-  if (!project.scopeConfirmed) {
+  if (!project.scopeLocked) {
     throw new Error('Scope no ha sido confirmado');
   }
 
@@ -61,11 +61,12 @@ export async function createPaymentSession(
   // 6. Crear transacción en BD
   const transaction = await prisma.transaction.create({
     data: {
-      projectId,
-      wompiReference,
+      projectId: project.id,
+      wompiId: wompiReference,
+      reference: wompiReference,
       subtotal,
-      tax,
-      total,
+      ivaTax: tax,
+      amountInCents: total,
       currency: 'COP',
     },
   });
@@ -111,9 +112,9 @@ export async function createSubscriptionAfterPayment(
 
   const subscription = await prisma.subscription.create({
     data: {
-      userId: project.clientId,
+      userId: project.userId,
       projectId,
-      planName: 'MAINTENANCE',
+      type: 'MAINTENANCE',
       monthlyPrice,
       nextBillingDate,
     },

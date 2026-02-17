@@ -20,7 +20,7 @@ export async function generateQuotationPRD(projectId: string): Promise<string> {
   const featuresText = project.features
     .map(
       (f) =>
-        `- ${f.name}: ${f.description} (Complejidad: ${f.complexity}, ~${f.estimatedHours}h)`
+        `- ${f.name}: ${f.description} (~${f.estimatedHours}h)`
     )
     .join('\n');
 
@@ -73,9 +73,9 @@ export async function uploadProjectDelivery(
     where: { id: projectId },
     data: {
       status: 'DELIVERED',
-      deliveryZipUrl: zipUrl,
-      deliveryVideoUrl: videoUrl,
-      completedAt: new Date(),
+      deliveryFile: zipUrl,
+      videoWalkthrough: videoUrl,
+      deliveredAt: new Date(),
     },
   });
 
