@@ -21,7 +21,7 @@
       },
       "step2": {
         "title": "Cotización instantánea",
-        "description": "Nuestro motor de IA analiza tu proyecto, desglos en features y genera un precio justo en segundos."
+        "description": "Nuestro motor de IA analiza tu proyecto, desglosa en features y genera un precio justo en segundos."
       },
       "step3": {
         "title": "Paga y recibe",
@@ -48,7 +48,7 @@
       }
     },
     "cta": {
-      "title": "Listo para comenzar?",
+      "title": "¿Listo para comenzar?",
       "subtitle": "Obtén tu cotización gratuita en menos de 2 minutos.",
       "button": "Solicitar cotización"
     },
