@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // Handle transaction.updated event
     if (event === 'transaction.updated') {
       const transaction = data.transaction;
-      const { reference, status, id: wompiId, amount_in_cents } = transaction;
+      const { reference, status, id: wompiId } = transaction;
 
       // Update transaction in database
       const dbTransaction = await prisma.transaction.findUnique({
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       else if (status === 'ERROR') statusMap = 'ERROR';
 
       // Update transaction
-      const updatedTransaction = await prisma.transaction.update({
+      await prisma.transaction.update({
         where: { id: dbTransaction.id },
         data: {
           wompiStatus: statusMap,
@@ -87,12 +87,16 @@ export async function POST(req: NextRequest) {
           }))
         );
 
+        // Log blueprint for now (in production, save to S3 or database)
+        // TODO: Persist blueprint to database or file storage
+        // Consider adding a blueprintUrl field to Project model or creating a separate Document table
+        console.log(`Blueprint generated for project ${project.id}:`, blueprint.substring(0, 100) + '...');
+
         // Update project status
         await prisma.project.update({
           where: { id: project.id },
           data: {
             status: 'PAID',
-            // Save blueprint somewhere (e.g., as a file or in a separate table)
           },
         });
 
