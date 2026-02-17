@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== USERS ==========
+model User {
+  id            String     @id @default(cuid())
+  clerkId       String     @unique // Clerk external ID
+  email         String     @unique
+  firstName     String?
+  lastName      String?
+  role          Role       @default(CLIENT) // CLIENT | ADMIN
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  projects      Project[]
+  subscriptions Subscription[]
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+// ========== PROJECTS ==========
+model Project {
+  id                String      @id @default(cuid())
+  clientId          String
+  client            User        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  title             String // Título del proyecto (generado por IA)
+  description       String      @db.Text // Descripción original del cliente
+  status            ProjectStatus @default(PENDING_PAYMENT)
+  
+  // Motor de Cotización
+  basePrice         Float       @default(0) // USD
+  estimatedHours    Int         @default(0)
+  features          Feature[]   // Features atómicas detectadas por IA
+  
+  // Scope Lock
+  scopeConfirmed    Boolean     @default(false)
+  revisionsIncluded Int         @default(1) // Número de revisiones incluidas
+  
+  // Videos y Entrega
+  deliveryVideoUrl  String? // Link de Loom/YouTube
+  deliveryZipUrl    String? // Link al archivo .zip descargable
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  completedAt       DateTime?
+  
+  // Relations
+  transaction       Transaction?
+  subscription      Subscription?
+}
+
+enum ProjectStatus {
+  PENDING_PAYMENT    // Esperando pago
+  PAYMENT_APPROVED   // Pago confirmado por Wompi
+  IN_QUEUE           // En cola para desarrollo
+  IN_DEVELOPMENT     // En desarrollo
+  DELIVERED          // Entregado
+  ARCHIVED           // Archivado
+}
+
+// ========== FEATURES ==========
+model Feature {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  name        String    // Nombre de la feature (e.g., "Autenticación de usuarios")
+  description String    @db.Text // Descripción breve
+  complexity  Complexity // LOW | MEDIUM | HIGH
+  estimatedHours Int    @default(0)
+  
+  // Scope Lock
+  confirmed   Boolean   @default(false) // Usuario marcó el checkbox
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum Complexity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// ========== TRANSACTIONS ==========
+model Transaction {
+  id            String    @id @default(cuid())
+  projectId     String    @unique
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Wompi Data
+  wompiReference String   @unique // Referencia única para Wompi
+  wompiStatus   WompiStatus @default(PENDING)
+  wompiTransactionId String? // ID retornado por Wompi (post-pago)
+  
+  // Pricing
+  subtotal      Float     // Monto base
+  tax           Float     @default(0) // IVA/Retefuente
+  total         Float     // Total a pagar
+  currency      String    @default("COP")
+  
+  // Metadata
+  paymentMethod String?   // PSE, TARJETA, etc.
+  errorMessage  String?   @db.Text
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  approvedAt    DateTime?
+}
+
+enum WompiStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  ERROR
+}
+
+// ========== SUBSCRIPTIONS ==========
+model Subscription {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  projectId     String    @unique
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Plan
+  planName      String    @default("MAINTENANCE") // MAINTENANCE
+  monthlyPrice  Float
+  status        SubscriptionStatus @default(ACTIVE)
+  
+  // Ciclo de Facturación
+  billingDay    Int       @default(1) // Día del mes
+  nextBillingDate DateTime
+  
+  // Incluidos en el plan
+  monthlyChanges Int      @default(1) // Cambios menores incluidos
+  hosting       Boolean   @default(true)
+  bugFixes      Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  canceledAt    DateTime?
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+}
