@@ -103,17 +103,16 @@ Formato de respuesta:
 
     const project = await prisma.project.create({
       data: {
-        clientId: user_record.id,
+        userId: user_record.id,
         title: parsed.title,
         description: request.description,
         basePrice,
-        estimatedHours: totalHours,
+        totalPrice: basePrice,
         features: {
           createMany: {
             data: features.map((f: Feature) => ({
               name: f.name,
               description: f.description,
-              complexity: f.complexity,
               estimatedHours: f.estimatedHours,
             })),
           },
@@ -156,7 +155,10 @@ export async function confirmScopeLock(projectId: string): Promise<void> {
 
   await prisma.project.update({
     where: { id: projectId },
-    data: { scopeConfirmed: true },
+    data: { 
+      scopeLocked: true,
+      scopeLockedAt: new Date()
+    },
   });
 }
 
@@ -164,8 +166,7 @@ export async function confirmScopeLock(projectId: string): Promise<void> {
  * Marca una feature como confirmada (checkbox del usuario)
  */
 export async function confirmFeature(
-  featureId: string,
-  projectId: string
+  featureId: string
 ): Promise<void> {
   await prisma.feature.update({
     where: { id: featureId },

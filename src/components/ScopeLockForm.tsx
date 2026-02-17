@@ -29,7 +29,7 @@ export function ScopeLockForm({
 
   const handleFeatureToggle = async (featureId: string) => {
     try {
-      await confirmFeature(featureId, projectId);
+      await confirmFeature(featureId);
       setConfirmedFeatures((prev) => {
         const next = new Set(prev);
         if (next.has(featureId)) {
@@ -93,15 +93,6 @@ export function ScopeLockForm({
                 </label>
                 <p className="text-sm text-slate-600 mt-1">{feature.description}</p>
                 <div className="flex gap-2 mt-2">
-                  <span className={`badge text-xs ${
-                    feature.complexity === 'LOW'
-                      ? 'badge-success'
-                      : feature.complexity === 'MEDIUM'
-                        ? 'badge-warning'
-                        : 'badge-danger'
-                  }`}>
-                    {feature.complexity}
-                  </span>
                   <span className="text-xs text-slate-500">~{feature.estimatedHours}h</span>
                 </div>
               </div>

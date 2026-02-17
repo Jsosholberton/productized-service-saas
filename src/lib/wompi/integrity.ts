@@ -12,7 +12,7 @@ export function generateWompiSignature(
   integrityKey: string
 ): string {
   const payload = `${reference}${amountInCents}${currency}${integrityKey}`;
-  return crypto.createHash('sha256').update(payload).encode('hex');
+  return crypto.createHash('sha256').update(payload).digest('hex');
 }
 
 /**
