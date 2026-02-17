@@ -102,12 +102,13 @@ body {
 }
 
 /* Cards */
-.card {
+.card,
+.card-hover {
   @apply bg-white rounded-xl shadow-sm border border-slate-200 p-6;
 }
 
 .card-hover {
-  @apply bg-white rounded-xl shadow-sm border border-slate-200 p-6 transition-shadow hover:shadow-md cursor-pointer;
+  @apply transition-shadow hover:shadow-md cursor-pointer;
 }
 
 /* Badges */
