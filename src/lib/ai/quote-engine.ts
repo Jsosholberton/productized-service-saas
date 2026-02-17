@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { generateObject } from 'ai';
+import { generateObject, generateText } from 'ai';
 import { z } from 'zod';
 
 // Define the schema for features
@@ -15,8 +15,6 @@ const QuoteSchema = z.object({
   complexity: z.enum(['low', 'medium', 'high']).describe('Project complexity'),
   summary: z.string().describe('Executive summary of the project scope'),
 });
-
-type QuoteResult = z.infer<typeof QuoteSchema>;
 
 const BASE_HOURLY_RATE = 50; // USD per hour (adjust based on market)
 const MARGIN_MULTIPLIER = 1.3; // 30% margin on top of dev cost
@@ -126,13 +124,14 @@ ${featuresList}
 Provide a detailed, professional technical specification document.`;
 
   try {
-    const result = await openai('gpt-4o').doGenerate({
-      prompt: userPrompt,
+    const { text } = await generateText({
+      model: openai('gpt-4o'),
       system: systemPrompt,
+      prompt: userPrompt,
       temperature: 0.6,
     });
 
-    return result.text;
+    return text;
   } catch (error) {
     console.error('Error generating blueprint:', error);
     throw new Error('Failed to generate technical blueprint.');

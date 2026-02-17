@@ -1,9 +1,9 @@
 'use server';
 
-import { generateQuote, generateTechnicalBlueprint } from '@/lib/ai/quote-engine';
+import { generateQuote } from '@/lib/ai/quote-engine';
 import { prisma } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
-import { generateTransactionReference, calculateTotalWithTaxes } from '@/lib/wompi/integrity';
+import { generateTransactionReference } from '@/lib/wompi/integrity';
 
 interface GenerateQuoteInput {
   description: string;
@@ -29,7 +29,7 @@ interface QuoteResponse {
 export async function generateProjectQuote(input: GenerateQuoteInput): Promise<QuoteResponse> {
   try {
     // Check authentication
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: false, error: 'Unauthorized' };
     }
@@ -103,7 +103,7 @@ export async function generateProjectQuote(input: GenerateQuoteInput): Promise<Q
  */
 export async function confirmScopeLock(projectId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: false, error: 'Unauthorized' };
     }
@@ -151,7 +151,7 @@ export async function confirmScopeLock(projectId: string): Promise<{ success: bo
  */
 export async function confirmFeature(featureId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: false, error: 'Unauthorized' };
     }
@@ -197,7 +197,7 @@ export async function createTransaction(
   error?: string;
 }> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return { success: false, error: 'Unauthorized' };
     }
@@ -230,10 +230,13 @@ export async function createTransaction(
     const transaction = await prisma.transaction.create({
       data: {
         projectId,
+        wompiId: '', // Will be updated by webhook
         reference,
         amountInCents: totalAmount,
         currency: 'COP',
         subtotal: project.totalPrice,
+        ivaTax: 0,
+        reteFuente: 0,
         wompiStatus: 'PENDING',
       },
     });

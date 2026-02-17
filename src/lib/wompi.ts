@@ -61,7 +61,7 @@ export function buildWompiCheckoutUrl(
   clientName: string
 ): string {
   const params = new URLSearchParams({
-    public-key: process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || '',
+    'public-key': process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || '',
     reference,
     amount_in_cents: Math.round(amount * 100).toString(),
     signature,

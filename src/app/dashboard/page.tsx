@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import Link from 'next/link';
-import { ChevronRight, FileText, Zap } from 'lucide-react';
+import { ChevronRight, Zap } from 'lucide-react';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -32,7 +32,7 @@ export default async function DashboardPage() {
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
-          <p className="text-slate-600">Bienvenido, {user.firstName}</p>
+          <p className="text-slate-600">Bienvenido, {user.email.split('@')[0]}</p>
         </div>
 
         {/* New Quotation CTA */}
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
 
                     <div className="flex items-center justify-between mb-4">
                       <span className={`badge text-xs ${
-                        project.status === 'PAYMENT_APPROVED'
+                        project.status === 'PAID'
                           ? 'badge-success'
                           : project.status === 'IN_DEVELOPMENT'
                             ? 'badge-warning'
@@ -87,10 +87,12 @@ export default async function DashboardPage() {
                               ? 'badge-success'
                               : 'badge-primary'
                       }`}>
-                        {project.status === 'PENDING_PAYMENT' && 'Pendiente pago'}
-                        {project.status === 'PAYMENT_APPROVED' && 'En cola'}
+                        {project.status === 'PENDING' && 'Pendiente pago'}
+                        {project.status === 'PAID' && 'En cola'}
                         {project.status === 'IN_DEVELOPMENT' && 'En desarrollo'}
                         {project.status === 'DELIVERED' && 'Entregado'}
+                        {project.status === 'REVIEW' && 'En revisión'}
+                        {project.status === 'CANCELLED' && 'Cancelado'}
                       </span>
                       <span className="text-sm font-semibold text-slate-900">
                         ${project.basePrice.toLocaleString()}
@@ -98,7 +100,7 @@ export default async function DashboardPage() {
                     </div>
 
                     <div className="text-xs text-slate-500">
-                      {project.features.length} features • ~{project.estimatedHours}h
+                      {project.features.length} features • ~{project.features.reduce((sum, f) => sum + f.estimatedHours, 0)}h
                     </div>
                   </div>
                 </Link>
