@@ -1,6 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/webhooks/wompi/route": "app/api/webhooks/wompi/route.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/[locale]/page": "app/[locale]/page.js"
-}

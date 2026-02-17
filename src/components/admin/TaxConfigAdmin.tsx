@@ -1,16 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { formatDate } from '@/lib/utils';
-import { getActiveTaxConfig, listAvailableTaxRegimes, getTaxConfig } from '@/lib/config/tax-config';
-import type { TaxConfig } from '@/lib/config/tax-config';
+import { getActiveTaxConfig, listAvailableTaxRegimes } from '@/lib/config/tax-config';
 
 /**
  * Admin panel for managing tax regime configuration
  * Only accessible to admin users
  */
 export function TaxConfigAdmin() {
-  const [activeRegime, setActiveRegime] = useState<string>('PERSONA_NATURAL');
+  const [, setActiveRegime] = useState<string>('PERSONA_NATURAL');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     nit: '',
@@ -89,12 +87,12 @@ export function TaxConfigAdmin() {
             <div className="mt-2 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm">IVA</span>
-                <span className="font-mono font-semibold">{(currentConfig.ivaRate * 100).toFixed(0)}%</span>
+                <span className="font-mono font-semibold">{(currentConfig.charges.ivaRate * 100).toFixed(0)}%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Retefuente</span>
                 <span className="font-mono font-semibold">{
-                  (currentConfig.reteFuenteRate * 100).toFixed(0)
+                  (currentConfig.charges.reteFuenteRate * 100).toFixed(0)
                 }%</span>
               </div>
             </div>
@@ -116,7 +114,7 @@ export function TaxConfigAdmin() {
               </div>
               <div>
                 <p className="text-gray-600">Resolución DIAN</p>
-                <p className="font-mono mt-1">{currentConfig.dianResolution || 'N/A'}</p>
+                <p className="font-mono mt-1">{currentConfig.invoicing.resolutionNumber || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-gray-600">Vencimiento</p>
@@ -264,7 +262,7 @@ export function TaxConfigAdmin() {
             </div>
             <div>
               <p className="text-gray-600">Resolución DIAN</p>
-              <p className="font-mono mt-1 text-gray-900">{currentConfig.dianResolution || 'N/A'}</p>
+              <p className="font-mono mt-1 text-gray-900">{currentConfig.invoicing.resolutionNumber || 'N/A'}</p>
             </div>
             <div>
               <p className="text-gray-600">Vencimiento</p>
